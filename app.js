@@ -61,6 +61,7 @@ logoutButton.addEventListener("click", async () => {
   }
 });
 
+// Auth state listener
 onAuthStateChanged(auth, (user) => {
   if (user) {
     loginButton.style.display = "none";
@@ -68,7 +69,8 @@ onAuthStateChanged(auth, (user) => {
     submitPostButton.disabled = false;
     usernameDisplay.textContent = user.displayName;
     userInfo.style.display = "block";
-    loadPosts();
+
+    setTimeout(loadPosts, 100); // Wait to ensure user is initialized
   } else {
     loginButton.style.display = "block";
     logoutButton.style.display = "none";
@@ -76,6 +78,7 @@ onAuthStateChanged(auth, (user) => {
     usernameDisplay.textContent = "";
     userInfo.style.display = "none";
     postsContainer.innerHTML = "";
+    hideLoader();
   }
 });
 
@@ -110,74 +113,98 @@ submitPostButton.addEventListener("click", async () => {
 // Load posts and render
 function loadPosts() {
   showLoader();
-  const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
+  try {
+    const q = query(collection(db, "posts"), orderBy("timestamp", "desc"));
 
-  onSnapshot(q, (snapshot) => {
-    postsContainer.innerHTML = "";
-    snapshot.forEach((docSnap) => {
-      const post = docSnap.data();
-      const postId = docSnap.id;
-      const isLiked = post.likesBy?.includes(auth.currentUser?.uid);
-      const postDate = post.timestamp?.seconds
-        ? new Date(post.timestamp.seconds * 1000).toLocaleString()
-        : "Just now";
+    onSnapshot(q, (snapshot) => {
+      postsContainer.innerHTML = "";
 
-      const postElement = document.createElement("div");
-      postElement.className = "post";
-
-      postElement.innerHTML = `
-        <div id="pp">
-          <div id="an">
-            <img id="aimg" src="panda.webp" alt="">
-            <small><strong id="str">${post.author}</strong> | ${postDate}</small>
-          </div>
-          <h3 id="tits">${post.title}</h3>
-          <p>${post.content}</p>
-          <button class="like-btn" data-id="${postId}" ${isLiked ? 'disabled' : ''}>❤️ ${post.likes || 0}</button>
-          <button onclick="showReplyForm('${postId}')">Reply</button>
-          ${auth.currentUser?.uid === post.uid ? `<button onclick="deletePost('${postId}')">🗑 Delete</button>` : ""}
-          <div id="replies-${postId}"></div>
-          <div id="reply-form-${postId}" style="display: none;">
-            <input type="text" id="reply-input-${postId}" placeholder="Write a reply">
-            <button onclick="submitReply('${postId}')">Submit</button>
-          </div>
-        </div>`;
-
-      postsContainer.appendChild(postElement);
-
-      const repliesContainer = document.getElementById(`replies-${postId}`);
-      if (post.replies) {
-        post.replies.forEach((reply) => {
-          const replyElement = document.createElement("div");
-          replyElement.className = "reply";
-          replyElement.innerHTML = `<p>${reply.text}</p><small>By <strong>${reply.author}</strong></small>`;
-          repliesContainer.appendChild(replyElement);
-        });
+      if (snapshot.empty) {
+        postsContainer.innerHTML = "<p>No posts yet. Be the first to post!</p>";
+        hideLoader();
+        return;
       }
-    });
 
-    // Like button logic
-    document.querySelectorAll(".like-btn").forEach((btn) => {
-      btn.onclick = async () => {
-        const user = auth.currentUser;
-        const postId = btn.dataset.id;
-        if (!user || btn.disabled) return;
+      snapshot.forEach((docSnap) => {
+        const post = docSnap.data();
+        const postId = docSnap.id;
+        const currentUser = auth.currentUser;
+        const isLiked = post.likesBy?.includes(currentUser?.uid);
+        const postDate = post.timestamp?.seconds
+          ? new Date(post.timestamp.seconds * 1000).toLocaleString()
+          : "Just now";
 
-        try {
-          btn.disabled = true;
-          const postRef = doc(db, "posts", postId);
-          await updateDoc(postRef, {
-            likes: increment(1),
-            likesBy: arrayUnion(user.uid)
+        const postElement = document.createElement("div");
+        postElement.className = "post";
+
+        postElement.innerHTML = `
+          <div id="pp">
+            <div id="an">
+              <img id="aimg" src="panda.webp" alt="">
+              <small><strong id="str">${post.author}</strong> | ${postDate}</small>
+            </div>
+            <h3 id="tits">${post.title}</h3>
+            <p>${post.content}</p>
+            <button class="like-btn" data-id="${postId}" ${isLiked ? "disabled" : ""}>❤️ ${post.likes || 0}</button>
+            <button onclick="showReplyForm('${postId}')">Reply</button>
+            ${currentUser?.uid === post.uid ? `<button onclick="deletePost('${postId}')">🗑 Delete</button>` : ""}
+            <div id="replies-${postId}"></div>
+            <div id="reply-form-${postId}" style="display: none;">
+              <input type="text" id="reply-input-${postId}" placeholder="Write a reply">
+              <button onclick="submitReply('${postId}')">Submit</button>
+            </div>
+          </div>`;
+
+        postsContainer.appendChild(postElement);
+
+        const repliesContainer = document.getElementById(`replies-${postId}`);
+        if (post.replies?.length > 0) {
+          post.replies.forEach((reply) => {
+            const replyElement = document.createElement("div");
+            replyElement.className = "reply";
+            replyElement.innerHTML = `<p>${reply.text}</p><small>By <strong>${reply.author}</strong></small>`;
+            repliesContainer.appendChild(replyElement);
           });
-        } catch (err) {
-          console.error("Error liking:", err);
         }
-      };
-    });
+      });
 
+      // Like button handling
+      document.querySelectorAll(".like-btn").forEach((btn) => {
+        btn.onclick = async () => {
+          const user = auth.currentUser;
+          const postId = btn.dataset.id;
+          if (!user || btn.disabled) return;
+
+          try {
+            btn.disabled = true;
+            const postRef = doc(db, "posts", postId);
+            await updateDoc(postRef, {
+              likes: increment(1),
+              likesBy: arrayUnion(user.uid)
+            });
+          } catch (err) {
+            console.error("Error liking post:", err);
+          }
+        };
+      });
+
+      hideLoader();
+    }, (error) => {
+      console.error("Snapshot listener error:", error);
+      hideLoader();
+    });
+  } catch (err) {
+    console.error("loadPosts error:", err);
     hideLoader();
-  });
+  }
+
+  // Safety timeout in case loader hangs
+  setTimeout(() => {
+    if (loader.style.display !== "none") {
+      console.warn("Loader auto-hide fallback triggered.");
+      hideLoader();
+    }
+  }, 5000);
 }
 
 // Show reply form

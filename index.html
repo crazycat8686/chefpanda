@@ -16,7 +16,6 @@
       #auth {
         margin-bottom: 20px;
       }
-
       #an {
         display: flex;
         flex-direction: row;
@@ -41,7 +40,10 @@
         box-shadow: 1px 10px 20px 1px rgba(243, 65, 0, 0.363);
         border: 1px solid rgba(255, 255, 255, 0.384);
         padding: 14px;
-        margin: 10px auto 17px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 10px;
+        margin-bottom: 17px;
         border-radius: 15px;
         width: 93%;
         background: white;
@@ -59,44 +61,38 @@
         padding-left: 10px;
         background-color: rgba(255, 249, 246, 0.699);
       }
-
       #one {
         display: flex;
         margin-left: 33%;
         margin-right: auto;
       }
-
       #g {
         font-size: 40px;
       }
-
       #nav {
         display: flex;
         flex-direction: row;
       }
-
       #user-info {
         margin-top: 0%;
         justify-content: flex-start;
       }
-
       img {
+        margin-top: 0px;
         width: 30px;
         height: 30px;
         border-radius: 50%;
         margin-left: 2px;
       }
-
       #username {
         font-weight: bold;
         font-size: small;
       }
-
       #tits {
         color: orangered;
         font-weight: bolder;
         font-size: 30px;
-        margin: 4px 0 0 0;
+        margin: 4px 0px 0px 0px;
       }
 
       #com {
@@ -105,13 +101,16 @@
         justify-content: end;
         position: sticky;
       }
-
       #com button {
-        position: fixed;
-        bottom: 20px;
-        right: 7px;
-        z-index: 1000;
-        background: rgb(233, 172, 102);
+        position: fixed; /* Fixes the button to a position */
+        bottom: 20px; /* Positions it from the bottom */
+        right: 7px; /* Positions it from the right */
+        z-index: 1000; /* Ensures it stays on top of other elements */
+        background: rgb(
+          233,
+          172,
+          102
+        ); /* Optional: Adds a background so it doesn’t blend in */
         padding: 10px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         border-radius: 13px;
@@ -119,29 +118,24 @@
         border: none;
         margin-bottom: 30px;
       }
-
       #np {
         display: none;
         transition: all 0.4s ease-in-out;
       }
-
       .post button {
         border: none;
         border-radius: 12px;
         background-color: rgba(247, 239, 239, 0.699);
       }
-
       #str {
         margin-top: 7px;
         margin-left: 2px;
       }
-
       #an {
         background-color: rgba(245, 236, 216, 0.596);
         border-radius: 19px;
         width: 30%;
       }
-
       #an button {
         background-color: rgba(245, 236, 216, 0.596);
         border-radius: 19px;
@@ -153,8 +147,27 @@
         display: none !important;
       }
 
-      /* Spinner + loader fix */
-      #loader {
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 6px solid #eee;
+        border-top-color: orangered;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+   
+    </style>
+  </head>
+  <body>
+    <div
+      id="loader"
+      style="
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
@@ -164,32 +177,13 @@
         z-index: 9999;
         align-items: center;
         justify-content: center;
-        display: flex; /* FLEX FIX */
-      }
-
-      .spinner {
-        width: 50px;
-        height: 50px;
-        border: 6px solid #eee;
-        border-top-color: orangered;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Loader -->
-    <div id="loader">
+        font-size: 2em;
+        color: orangered;
+      "
+    >
       <div class="spinner"></div>
     </div>
 
-    <!-- Nav -->
     <div id="nav">
       <div id="one">
         <h1 id="g">Chef.Panda-forums&#174;</h1>
@@ -197,15 +191,14 @@
       <div id="user-info" style="display: none">
         <span id="username"></span>
       </div>
+
       <img src="image.png" alt="" />
     </div>
 
-    <!-- Auth -->
     <div id="auth">
       <button id="login">Login with Google</button>
     </div>
 
-    <!-- New Post UI -->
     <div id="np">
       <h2>Create a New Post</h2>
       <input type="text" id="title" class="in" placeholder="Title" />
@@ -214,22 +207,17 @@
       <button onclick="hidenp()">Cancel</button>
     </div>
 
-    <!-- Posts -->
     <div id="posts"></div>
-
-    <!-- New Post Button -->
     <div id="com">
       <button onclick="shownp()">✎ NewPost</button>
     </div>
-
-    <!-- Logout -->
     <div id="auth">
       <button id="logout" style="display: none">Logout</button>
     </div>
 
-    <!-- Show/hide New Post logic -->
     <script>
       let np = document.getElementById("np");
+      let snp = document.getElementById("submit-post");
       function shownp() {
         np.style.display = "block";
       }
@@ -237,8 +225,6 @@
         np.style.display = "none";
       }
     </script>
-
-    <!-- App Logic -->
     <script type="module" src="app.js"></script>
   </body>
 </html>
